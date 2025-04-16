@@ -1,8 +1,9 @@
 import math
-from ui import Camera
+from camera import Camera
 from colors import Colors
 import pygame
-from pygame import gfxdraw
+import pygame.gfxdraw
+
 class GameObject:
     #self.x: float -> "class variables" or smth cuz you dont want to be able to make a gameObject
     def __init__(self) -> None:
@@ -10,10 +11,10 @@ class GameObject:
         self.y: float = 0
         self.size: int = 10
 
-    def draw(self) -> None:
+    def draw(self, camera: Camera) -> None:
         raise NotImplementedError
 
-    def tick(self) -> None:
+    def tick(self, dt: float) -> None:
         raise NotImplementedError
     
     def isColliding(self, other: 'GameObject') -> bool:
@@ -26,7 +27,8 @@ class Body(GameObject):
         self.x_vel: float = 0
         self.y_vel: float = 0
         self.mass: float = 0
-        self.radius: float = 0
+        self.radius: float = 10
+        self.color: tuple[int, int, int] = Colors.blue
 
     def distance_to(self, other: 'Body') -> float:
         return math.sqrt(abs(self.x-other.x)**2+abs(self.y-other.y)**2)
@@ -52,12 +54,13 @@ class Body(GameObject):
         return abs(self.x/camera.scale+camera.x) < screen_width+self.radius/camera.scale and abs(self.y/camera.scale+camera.y) < screen_height+self.radius/camera.scale
     
     def draw(self, camera: Camera, aa=True, shine=True):
-        pygame.gfxdraw.filled_circle(camera.window, int(self.x/camera.scale+camera.x), int(self.y/camera.scale+camera.y), int(self.radius/camera.scale+.5), self.color)
+        pygame.gfxdraw.filled_circle(camera.window, camera.get_x(self.x), camera.get_y(self.y), round(self.radius/camera.scale), self.color)
         if aa:
-            pygame.gfxdraw.aacircle(camera.window, int(self.x/camera.scale+camera.x), int(self.y/camera.scale+camera.y), int(self.radius/camera.scale+.5), (int(self.color[0]/1.5), int(self.color[1]/1.5), int(self.color[2]/1.5)))
+            pygame.gfxdraw.aacircle(camera.window, camera.get_x(self.x), camera.get_y(self.y), round(self.radius/camera.scale), (Colors.set_luminosity(self.color, Colors.get_luminosity(self.color)/1.5)))
         if shine:
-            pygame.draw.circle(camera.window, Colors.white, (int(self.x/camera.scale+camera.x), int(self.y/camera.scale+camera.y)), int((self.radius*0.8)/camera.scale+.5), int(self.radius/camera.scale/5), draw_top_right=True)
-    def tick(self):
+            pygame.draw.circle(camera.window, Colors.white, (camera.get_x(self.x), camera.get_y(self.y)), round((self.radius*0.8)/camera.scale), round(self.radius/camera.scale/5), draw_top_right=True)
+    
+    def tick(self, dt: float):
         pass
         
 class Player(Body):
