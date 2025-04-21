@@ -19,6 +19,7 @@ class Colors:
     turquoise = (0, 255, 255)
     good_color = (32, 255, 168)
     cyan = turquoise
+    tan = (210, 180, 140)
 
     brown = (139,69,19)
     brown = (139,69,19)

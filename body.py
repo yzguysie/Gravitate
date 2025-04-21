@@ -17,25 +17,35 @@ class GameObject:
     def tick(self, dt: float) -> None:
         raise NotImplementedError
     
-    def isColliding(self, other: 'GameObject') -> bool:
+    def is_colliding(self, other: 'GameObject') -> bool:
         return (self.x-other.x)**2 + (self.y-other.y)**2 < (self.size+other.size)**2
+    
+    def to_str(self, separator: str) -> str:
+        data = [self.x, self.y, self.size]
+        return data.join(separator)
+    
+    def from_str(string: str, seperator: str) -> 'GameObject':
+        obj = GameObject()
+        data = str.split(seperator)
+        obj.x = data[0]
+        obj.y = data[1]
+        obj.size = data[2]
 
 class Body(GameObject):
     def __init__(self) -> None:
         super().__init__()
         self.static: bool = None
-        self.x_vel: float = 0
-        self.y_vel: float = 0
-        self.mass: float = 0
+        self.xvel: float = 0
+        self.yvel: float = 0
+        self.mass: float = 1
         self.radius: float = 10
         self.color: tuple[int, int, int] = Colors.blue
 
     def distance_to(self, other: 'Body') -> float:
         return math.sqrt(abs(self.x-other.x)**2+abs(self.y-other.y)**2)
 
-    def calc_gravity(self, other: 'Body') -> tuple[float, float]:
+    def calc_gravity(self, other: 'Body', G: float = 1) -> tuple[float, float]:
         # Returns force of gravity as a tuple vector containing x force and y force
-        G = 1 # Gravitational Constant
         distance = self.distance_to(other)
         if distance == 0:
             print("WARNING: DIVISION BY 0 in calc_gravity (distance = 0)")
@@ -43,12 +53,19 @@ class Body(GameObject):
 
         
 
-        angle = math.atan2(self.y - other.y, self.x - other.x)
+        angle = math.atan2(other.y - self.y, other.x - self.x)
         vector = (math.cos(angle), math.sin(angle))
 
 
         force = ((self.mass*other.mass)/distance**2)
         return (vector[0]*force*G, vector[1]*force*G)
+    
+    def apply_gravity(body1: 'Body', body2: 'Body', G: float = 1) -> None:
+        force: tuple[float, float] = body1.calc_gravity(body2, G)
+        body1.xvel += force[0]
+        body1.yvel += force[1]
+        body2.xvel -= force[0]
+        body2.yvel -= force[1]
     
     def is_visible(self, camera: Camera, screen_width, screen_height) -> bool: # Returns whether the object would be visible, if drawn
         return abs(self.x/camera.scale+camera.x) < screen_width+self.radius/camera.scale and abs(self.y/camera.scale+camera.y) < screen_height+self.radius/camera.scale
@@ -61,7 +78,8 @@ class Body(GameObject):
             pygame.draw.circle(camera.window, Colors.white, (camera.get_x(self.x), camera.get_y(self.y)), round((self.radius*0.8)/camera.scale), round(self.radius/camera.scale/5), draw_top_right=True)
     
     def tick(self, dt: float):
-        pass
+        self.x += self.xvel
+        self.y += self.yvel
         
 class Player(Body):
     def __init__(self) -> None:
@@ -83,6 +101,7 @@ class Target(BlackHole):
 class Planet(Body):
     def __init__(self) -> None:
         super().__init__()
+        self.color = Colors.tan
 
 class Star(Body):
     def __init__(self) -> None:
