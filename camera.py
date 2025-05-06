@@ -27,6 +27,9 @@ class Camera:
 
     def get_y(self, y) -> int:
         return round((y+self.height/2)/self.scale+self.y)
+    
+    def get_pos(self, pos: tuple[int, int]) -> tuple[int, int]:
+        return self.get_x(pos[0]), self.get_y(pos[1])
 
     def get_screen_x(self, x) -> int:
         return round((x-self.x)*self.scale-self.width/2)
