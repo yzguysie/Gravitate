@@ -3,6 +3,7 @@ from camera import Camera
 from colors import Colors
 import pygame
 import pygame.gfxdraw
+from resources import Resources
 
 class Sprite(pygame.sprite.Sprite):
     def __init__(self, image: pygame.surface.Surface, centered: bool = True) -> None:
@@ -38,6 +39,9 @@ class GameObject:
         self.y: float = 0
         self.size: int = 10
 
+    def calc_distance(point1: tuple, point2: tuple) -> float:
+        return math.sqrt((point1[0]-point2[0])**2+(point1[1]-point2[1])**2)
+    
     def draw(self, camera: Camera) -> None:
         raise NotImplementedError
 
@@ -95,6 +99,11 @@ class Body(GameObject):
         self.sprite = Sprite(image)
         self.sprite.set_size(self.radius, self.radius)
 
+    def getting_closer(self, other: 'Body') -> bool:
+        distance_1 = GameObject.calc_distance((self.x, self.y), (other.x, other.y))
+        distance_2 = GameObject.calc_distance((self.x+self.xvel*.01, self.y+self.yvel*.01), (other.x+other.xvel*.01, other.y+other.yvel*.01))
+        return distance_2 <= distance_1
+
     def distance_to(self, other: 'Body') -> float:
         return math.sqrt(abs(self.x-other.x)**2+abs(self.y-other.y)**2)
 
@@ -127,6 +136,12 @@ class Body(GameObject):
     def apply_collision(body1: 'Body', body2: 'Body') -> None:
         if not body1.is_colliding(body2):
             return
+        
+        if not body1.getting_closer(body2):
+            print("Nope")
+            return
+        
+
         if body1.static and body2.static:
             return
         if type(body1) == Player and type(body2) == Target:
@@ -158,24 +173,28 @@ class Body(GameObject):
             velb1thing = (v1*math.cos(theta1-phi)*(m1-m2) + 2*m2*v2*math.cos(theta2-phi))/(m1+m2)
             velb2thing = (v2*math.cos(theta2-phi)*(m2-m1) + 2*m1*v1*math.cos(theta1-phi))/(m1+m2)
 
+
+
         elif body1.static:
             velb1thing = 0
+
             velb2thing = (v2*math.cos(theta2-phi)*(-1))
 
         else:
-            velb1thing = (v1*math.cos(theta1-phi)*(-1) + 2*v2*math.cos(theta2-phi))
+            velb1thing = (v1*math.cos(theta1-phi)*(-1))
             velb2thing = 0 
 
 
+            xvelb1 = velb1thing * (math.cos(phi)+v1*math.sin(theta1-phi)*math.cos(phi+pi/2))
+            yvelb1 = velb1thing * (math.sin(phi)+v1*math.sin(theta1-phi)*math.sin(phi+pi/2))
+            xvelb2 = velb2thing * (math.cos(phi)+v2*math.sin(theta2-phi)*math.cos(phi+pi/2))
+            yvelb2 = velb2thing * (math.sin(phi)+v2*math.sin(theta2-phi)*math.sin(phi+pi/2))
+            body1.xvel = xvelb1
+            body1.yvel = yvelb1
+            body2.xvel = xvelb2
+            body2.yvel = yvelb2
 
-        xvelb1 = velb1thing * (math.cos(phi)+v1*math.sin(theta1-phi)*math.cos(phi+pi/2))
-        yvelb1 = velb1thing * (math.sin(phi)+v1*math.sin(theta1-phi)*math.sin(phi+pi/2))
-        xvelb2 = velb2thing * (math.cos(phi)+v2*math.sin(theta2-phi)*math.cos(phi+pi/2))
-        yvelb2 = velb2thing * (math.sin(phi)+v2*math.sin(theta2-phi)*math.sin(phi+pi/2))
-        body1.xvel = xvelb1
-        body1.yvel = yvelb1
-        body2.xvel = xvelb2
-        body2.yvel = yvelb2
+        Resources.win_sfx.play()
         # if not body1.static:
         #     body1.x -= overlap*vector[0]*b1mult
         #     body1.y -= overlap*vector[1]*b1mult
@@ -286,7 +305,8 @@ class Planet(Body):
     def __init__(self) -> None:
         super().__init__()
         self.color = Colors.tan
-        self.static = True
+        self.static = False
+        self.sprite = Sprite(Resources.planet_default_image)
 
     def from_str(string: str, separator: str):
         data = string.split(separator)

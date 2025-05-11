@@ -9,10 +9,10 @@ import ui
 import math
 from enum import Enum
 from configparser import ConfigParser
+from resources import Resources
+from functools import partial
 
-class Resources:
-    planet_default_image = pygame.image.load("images/planetbig.png")
-    background_image = pygame.image.load("images/background.jpg")
+
 
 # class Screen:
 #     def __init__(self, game: Game):
@@ -52,7 +52,8 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.state: GameState
         self.config = ConfigParser() 
-        self.levels = ["level_6", "level_2", "level_3", "level_5", "level_1", "level_6"]
+        self.levels = ["bullshit", "level_1", "level_2", "level_3", "level_4", "level_5", "level_6"]
+        self.current_level = 0
 
     def get_unit_vector(pos1: tuple[float, float], pos2: tuple[float, float]) -> tuple[float, float]:
         angle = math.atan2(pos2[1] - pos1[1], pos2[0] - pos1[0])
@@ -67,7 +68,11 @@ class Game:
             self.call_next()
 
     def play_button_clicked(self) -> None:
+        self.state = GameState.LEVEL_SELECT
+
+    def level_button_clicked(self, level) -> None:
         self.state = GameState.PLAYING
+        self.current_level = level
 
     def quit_button_clicked(self) -> None:
         self.state = GameState.QUITTING
@@ -84,7 +89,7 @@ class Game:
     def back_to_menu_button_cliked(self) -> None:
         self.state = GameState.IN_MENU
 
-    def fullscreen_button_clicked(self) -> None:
+    def toggle_fullscreen(self) -> None:
         self.fullscreen = not self.fullscreen
         if self.fullscreen:
             pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -104,9 +109,11 @@ class Game:
             self.play()
         elif self.state == GameState.IN_EDITOR:
             self.editor()
+        elif self.state == GameState.LEVEL_SELECT:
+            self.level_select()
         else:
             print("Holy [CL]ap louis")
-            self.state == GameState.QUITTING
+            self.state = GameState.QUITTING
             self.quit()
 
     def save_level(self, level_name: str) -> None:
@@ -138,13 +145,14 @@ class Game:
                 self.state = GameState.QUITTING
                 return
             
-            if event.type == pygame.K_F11:
-                pass
+
 
             
             # Specific Keybinds
 
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    self.toggle_fullscreen()
                 if event.key == pygame.K_ESCAPE:
                     if self.state == GameState.IN_MENU:
                         self.state = GameState.QUITTING
@@ -302,7 +310,7 @@ class Game:
         button_spacing = self.screen_height/10
         button_width = self.screen_width/5
         button_height = self.screen_height/10
-        fullscreen_button = ui.Button(button_x, button_spacing*1, button_width, button_height, "TOGGLE FULLSCREEN", self.fullscreen_button_clicked)
+        fullscreen_button = ui.Button(button_x, button_spacing*1, button_width, button_height, "TOGGLE FULLSCREEN", self.toggle_fullscreen)
 
         back_to_menu_button = ui.Button(button_x, button_spacing*2, button_width, button_height, "BACK TO MENU", self.back_to_menu_button_cliked)
         self.buttons.append(fullscreen_button)
@@ -326,7 +334,7 @@ class Game:
         self.level: Level = Level()
         self.level.name = "level"
         self.buttons = []
-        button_x = self.screen_width/25
+        button_x = self.screen_width/250
         button_spacing = self.screen_height/10
         button_width = self.screen_width/5
         button_height = self.screen_height/10
@@ -335,10 +343,22 @@ class Game:
         save_box = ui.TextBox(button_x, button_spacing*2, button_width, button_height, self.save_level)
         load_box = ui.TextBox(button_x, button_spacing*3, button_width, button_height, self.load_level)
 
+        delete_button = ui.Button(button_x+button_width*0, self.screen_height-button_height, button_width, button_height, "DELETE")
+        edit_button =   ui.Button(button_x+button_width*1, self.screen_height-button_height, button_width, button_height, "EDIT")
+        player_button = ui.Button(button_x+button_width*2, self.screen_height-button_height, button_width, button_height, "PLAYER")
+        target_button = ui.Button(button_x+button_width*3, self.screen_height-button_height, button_width, button_height, "TARGET")
+        planet_button = ui.Button(button_x+button_width*4, self.screen_height-button_height, button_width, button_height, "PLANET")
+
 
         self.buttons.append(back_to_menu_button)
         self.buttons.append(save_box)
         self.buttons.append(load_box)
+        self.buttons.append(delete_button)
+        self.buttons.append(edit_button)
+        self.buttons.append(player_button)
+        self.buttons.append(target_button)
+        self.buttons.append(planet_button)
+
         while self.state == GameState.IN_EDITOR:
             self.window.fill(self.background_color)
             self.background.set_size(self.window.get_size()[0], self.window.get_size()[1])
@@ -362,12 +382,50 @@ class Game:
     def quit(self) -> None:
         pygame.quit()
 
+    def pause_menu(self) -> None:
+        pass
+
     def calc_distance(point1: tuple, point2: tuple) -> float:
         return math.sqrt((point1[0]-point2[0])**2+(point1[1]-point2[1])**2)
     
     def level_select(self) -> None:
         self.buttons = []
-        levels = []
+        button_x = 0
+        button_y = 0
+        button_spacing_y = self.screen_height/10
+        button_spacing_x = self.screen_width/5
+        button_width = self.screen_width/5
+        button_height = self.screen_height/10
+        level_count = 0
+        for level_name in self.levels:
+            level_button = ui.Button(button_x, button_y, button_width, button_height, level_name, partial(self.level_button_clicked, level_count))
+            self.buttons.append(level_button)
+            level_count += 1
+            button_y += button_spacing_y
+            if button_y > self.screen_height-button_height:
+                button_y = 0
+                button_x += button_spacing_x
+
+        while self.state == GameState.LEVEL_SELECT:
+            self.window.fill(self.background_color)
+            self.background.set_size(self.window.get_size()[0], self.window.get_size()[1])
+            self.background.draw(self.window)
+            self.events = pygame.event.get()
+            self.handle_events(self.events)
+
+            for button in self.buttons:
+                button.tick()
+
+            for button in self.buttons:
+                button.draw(self.window)
+                
+            pygame.display.flip()
+            self.clock.tick(self.target_fps)   
+
+
+    def pause_menu(self) -> None:
+        self.buttons = []
+
 
     def play(self) -> None:
 
@@ -377,8 +435,6 @@ class Game:
         self.buttons = []
         self.background = body.Sprite(Resources.background_image)
         self.background.centered = False
-
-        self.current_level = 0
         self.camera: Camera = Camera(self.window)
         self.load_level(self.levels[self.current_level])
 
@@ -421,6 +477,7 @@ class Game:
             if player.reached_target:
                 self.current_level += 1
                 self.load_level(self.levels[self.current_level])
+                Resources.win_sfx.play()
 
             
 
@@ -442,12 +499,13 @@ class Game:
         self.level.name = level_name
         self.level.size = self.level.calc_size()
         self.camera.set_scale(self.level.size/self.screen_height)
-        self.objects = copy.deepcopy(self.level.objects)
+        #self.objects = copy.deepcopy(self.level.objects)
+        self.objects = self.level.objects
         for object in self.objects:
             if type(object) == body.Player:
                 self.player = object
-            if type(object) == body.Planet:
-                object.make_sprite(Resources.planet_default_image)
+            # if type(object) == body.Planet:
+            #     object.make_sprite(Resources.planet_default_image)
         #self.get_level(self.level)
 
 class GameState(Enum):
@@ -457,6 +515,8 @@ class GameState(Enum):
     IN_SETTINGS = 3
     IN_EDITOR = 4
     IN_HOW_TO_PLAY = 5
+    LEVEL_SELECT = 6
+    PAUSE_MENU = 7
 
 class Selection(Enum):
     DELETE = 0
