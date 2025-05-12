@@ -52,7 +52,7 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.state: GameState
         self.config = ConfigParser() 
-        self.levels = ["bullshit", "level_1", "level_2", "level_3", "level_4", "level_5", "level_6"]
+        self.levels = ["test", "level_1", "level_2", "level_3", "level_4", "level_5", "level_6"]
         self.current_level = 0
 
     def get_unit_vector(pos1: tuple[float, float], pos2: tuple[float, float]) -> tuple[float, float]:
@@ -469,8 +469,9 @@ class Game:
 
     def tick(self, dt: float) -> None:
         bodies = [object for object in self.objects if isinstance(object, body.Body)]
-        Game.all_pair(bodies, body.Body.apply_gravity)
         Game.all_pair(bodies, body.Body.apply_collision)
+        Game.all_pair(bodies, body.Body.apply_gravity)
+
         for object in self.objects:
             object.tick(dt)
         for player in [obj for obj in self.objects if type(obj) == body.Player]:

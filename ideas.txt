@@ -2,3 +2,9 @@ Levels have a variable size, size determines how zoomed out the camera is
 Instead of all these shitty "playing" "in_menu" variables just have 1 state variable that switches between each state since they are mutually exclusive
 Instead of all gamestate funcs (play, main_menu, editor) handling events make one handle events method
 Screen class to get rid of all that shitty duped code - Draw bg, tick buttons, handle events, tick clock like wtf gimme that but how do i do it without needing a refrence to the game
+
+todo:
+- Fix the physics bro
+- Make how to play Screen
+- Make textures for each obj
+- Make editor buttons to select shit

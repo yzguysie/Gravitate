@@ -140,7 +140,7 @@ class Body(GameObject):
         if not body1.getting_closer(body2):
             print("Nope")
             return
-        
+        print(str(body1) + str(body2))
 
         if body1.static and body2.static:
             return
@@ -185,14 +185,19 @@ class Body(GameObject):
             velb2thing = 0 
 
 
-            xvelb1 = velb1thing * (math.cos(phi)+v1*math.sin(theta1-phi)*math.cos(phi+pi/2))
-            yvelb1 = velb1thing * (math.sin(phi)+v1*math.sin(theta1-phi)*math.sin(phi+pi/2))
-            xvelb2 = velb2thing * (math.cos(phi)+v2*math.sin(theta2-phi)*math.cos(phi+pi/2))
-            yvelb2 = velb2thing * (math.sin(phi)+v2*math.sin(theta2-phi)*math.sin(phi+pi/2))
-            body1.xvel = xvelb1
-            body1.yvel = yvelb1
-            body2.xvel = xvelb2
-            body2.yvel = yvelb2
+        xvelb1 = velb1thing * (math.cos(phi)+v1*math.sin(theta1-phi)*math.cos(phi+pi/2))
+        yvelb1 = velb1thing * (math.sin(phi)+v1*math.sin(theta1-phi)*math.sin(phi+pi/2))
+        xvelb2 = velb2thing * (math.cos(phi)+v2*math.sin(theta2-phi)*math.cos(phi+pi/2))
+        yvelb2 = velb2thing * (math.sin(phi)+v2*math.sin(theta2-phi)*math.sin(phi+pi/2))
+        print("Body 1 initial velocity: " + str(body1.xvel) + ", " + str(body1.yvel))
+        print("Body 2 initial velocity: " + str(body2.xvel) + ", " + str(body2.yvel))
+
+        body1.xvel = xvelb1
+        body1.yvel = yvelb1
+        body2.xvel = xvelb2
+        body2.yvel = yvelb2
+        print("Body 1 final velocity: " + str(body1.xvel) + ", " + str(body1.yvel))
+        print("Body 2 final velocity: " + str(body2.xvel) + ", " + str(body2.yvel))
 
         Resources.win_sfx.play()
         # if not body1.static:
