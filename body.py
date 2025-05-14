@@ -199,7 +199,7 @@ class Body(GameObject):
         print("Body 1 final velocity: " + str(body1.xvel) + ", " + str(body1.yvel))
         print("Body 2 final velocity: " + str(body2.xvel) + ", " + str(body2.yvel))
 
-        Resources.win_sfx.play()
+        Resources.collide_sfx.play()
         # if not body1.static:
         #     body1.x -= overlap*vector[0]*b1mult
         #     body1.y -= overlap*vector[1]*b1mult
@@ -310,7 +310,7 @@ class Planet(Body):
     def __init__(self) -> None:
         super().__init__()
         self.color = Colors.tan
-        self.static = False
+        self.static = True
         self.sprite = Sprite(Resources.planet_default_image)
 
     def from_str(string: str, separator: str):

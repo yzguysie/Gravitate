@@ -50,5 +50,18 @@ class Level:
         #IDK calc it bruv prolly
         size = max(highest_x-lowest_x, highest_y-lowest_y)
         return size
-        raise NotImplementedError("Not yet Implemented")
+    
+
+    def calc_center(self) -> tuple[int, int]:
+        lowest_x: int = self.objects[0].x
+        lowest_y: int = self.objects[0].y
+        highest_x: int = self.objects[0].x
+        highest_y: int = self.objects[0].y
+        for object in self.objects:
+            lowest_x = min(lowest_x, object.x)
+            lowest_y = min(lowest_y, object.y)
+            highest_x = max(highest_x, object.x)
+            highest_y = max(highest_y, object.y)
+        #IDK calc it bruv prolly
+        return (highest_x-lowest_x)//2, (highest_y-lowest_y)//2
             
