@@ -159,7 +159,10 @@ class Body(GameObject):
         # if body2.static:
         #     b1mult = 1
         #     b2mult = 0
-
+        if type(body1) == Planet:
+            body1.static = False
+        if type(body2) == Planet:
+            body2.static = False
         phi = math.atan2(body2.y - body1.y, body2.x - body1.x)
         theta1 = math.atan2(body1.yvel, body1.xvel)
         theta2 = math.atan2(body2.yvel, body2.xvel)
@@ -234,7 +237,7 @@ class Body(GameObject):
             self.y += self.yvel
 
     def to_str(self, separator: str) -> str:
-        data = [str(type(self).__name__), str(self.x), str(self.y), str(self.mass), str(self.radius)]
+        data = [str(type(self).__name__), str(self.x), str(self.y), str(self.mass), str(self.radius), str(self.static), str(self.xvel), str(self.yvel)]
         return separator.join(data)
         
     def from_str(string: str, separator: str):
@@ -244,6 +247,9 @@ class Body(GameObject):
         object.y = int(data[2])
         object.mass = float(data[3])
         object.radius = float(data[4])
+        object.static = bool(data[5])
+        object.xvel = float(data[6])
+        object.yvel = float(data[7])
         return object
 
 

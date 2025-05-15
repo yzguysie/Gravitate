@@ -52,7 +52,8 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.state: GameState
         self.config = ConfigParser() 
-        self.levels = ["test", "level_1", "level_2", "level_3", "level_4", "level_5", "level_6"]
+        self.levels = ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6", "level_7"]
+        self.level = None
         self.current_level = 0
         pygame.mixer.music.load("music/482139.mp3")
         pygame.mixer.music.play()
@@ -68,6 +69,9 @@ class Game:
         self.state = GameState.IN_MENU
         while self.state != GameState.QUITTING:
             self.call_next()
+
+    def set_selected(self, selected):
+        self.selected = selected
 
     def play_button_clicked(self) -> None:
         self.state = GameState.LEVEL_SELECT
@@ -98,6 +102,11 @@ class Game:
         self.state = GameState.PLAYING
         self.load_level(self.levels[self.current_level])
     
+    def next_level_button_clicked(self) -> None:
+        self.state = GameState.PLAYING
+        self.current_level += 1
+        self.load_level(self.levels[self.current_level])
+
     def back_to_level_list_button_clicked(self) -> None:
         self.state = GameState.LEVEL_SELECT
 
@@ -126,6 +135,8 @@ class Game:
             self.level_select()
         elif self.state == GameState.PAUSE_MENU:
             self.pause_menu()
+        elif self.state == GameState.WIN_SCREEN:
+            self.win_screen()
         else:
             print("Holy [CL]ap louis")
             self.state = GameState.QUITTING
@@ -294,14 +305,14 @@ class Game:
         editor_button =      ui.Button(button_x, button_spacing*2, button_width, button_height, "EDITOR",      self.editor_button_clicked)
         settings_button =    ui.Button(button_x, button_spacing*3, button_width, button_height, "SETTINGS",    self.settings_button_clicked)
         how_to_play_button = ui.Button(button_x, button_spacing*4, button_width, button_height, "HOW TO PLAY", self.how_to_play_button_clicked)
-        quit_button =        ui.Button(button_x, button_spacing*5, button_width, button_height, "QUIT",        self.quit_button_clicked)
+        quit_button =        ui.Button(button_x, button_spacing*4, button_width, button_height, "QUIT",        self.quit_button_clicked)
         
         #play_button.set_theme(Colors.dark_blue)
         
         self.buttons.append(play_button)
         self.buttons.append(editor_button)
         self.buttons.append(settings_button)
-        self.buttons.append(how_to_play_button)
+        #self.buttons.append(how_to_play_button)
         self.buttons.append(quit_button)
         while self.state == GameState.IN_MENU:
             self.window.fill(self.background_color)
@@ -349,7 +360,7 @@ class Game:
         self.level: Level = Level()
         self.level.name = "level"
         self.buttons = []
-        button_x = self.screen_width/250
+        button_x = 0
         button_spacing = self.screen_height/10
         button_width = self.screen_width/5
         button_height = self.screen_height/10
@@ -358,18 +369,18 @@ class Game:
         save_box = ui.TextBox(button_x, button_spacing*2, button_width, button_height, self.save_level)
         load_box = ui.TextBox(button_x, button_spacing*3, button_width, button_height, self.load_level)
 
-        delete_button = ui.Button(button_x+button_width*0, self.screen_height-button_height, button_width, button_height, "DELETE")
-        edit_button =   ui.Button(button_x+button_width*1, self.screen_height-button_height, button_width, button_height, "EDIT")
-        player_button = ui.Button(button_x+button_width*2, self.screen_height-button_height, button_width, button_height, "PLAYER")
-        target_button = ui.Button(button_x+button_width*3, self.screen_height-button_height, button_width, button_height, "TARGET")
-        planet_button = ui.Button(button_x+button_width*4, self.screen_height-button_height, button_width, button_height, "PLANET")
+        delete_button = ui.Button(button_x+button_width*0, self.screen_height-button_height, button_width, button_height, "DELETE", partial(self.set_selected, Selection.DELETE))
+        player_button = ui.Button(button_x+button_width*1, self.screen_height-button_height, button_width, button_height, "PLAYER", partial(self.set_selected, Selection.PLAYER))
+        target_button = ui.Button(button_x+button_width*2, self.screen_height-button_height, button_width, button_height, "TARGET", partial(self.set_selected, Selection.TARGET))
+        planet_button = ui.Button(button_x+button_width*3, self.screen_height-button_height, button_width, button_height, "PLANET", partial(self.set_selected, Selection.PLANET))
+        star_button =   ui.Button(button_x+button_width*4, self.screen_height-button_height, button_width, button_height, "STAR",   partial(self.set_selected, Selection.STAR))
 
 
         self.buttons.append(back_to_menu_button)
         self.buttons.append(save_box)
         self.buttons.append(load_box)
         self.buttons.append(delete_button)
-        self.buttons.append(edit_button)
+        self.buttons.append(star_button)
         self.buttons.append(player_button)
         self.buttons.append(target_button)
         self.buttons.append(planet_button)
@@ -398,7 +409,6 @@ class Game:
         pygame.quit()
 
     def pause_menu(self) -> None:
-        print("suck")
         self.buttons = []
         button_width = self.screen_width/5
         button_height = self.screen_height/10
@@ -415,6 +425,43 @@ class Game:
         self.buttons.append(back_to_level_list_button)
         self.buttons.append(back_to_menu_button)
         while self.state == GameState.PAUSE_MENU:
+            self.window.fill(self.background_color)
+            self.background.set_size(self.window.get_size()[0], self.window.get_size()[1])
+            self.background.draw(self.window)
+            self.events = pygame.event.get()
+            self.handle_events(self.events)
+            self.draw()
+            for button in self.buttons:
+                button.tick()
+
+            for button in self.buttons:
+                button.draw(self.window)
+
+            
+                
+            pygame.display.flip()
+            self.clock.tick(self.target_fps)   
+
+    def win_screen(self) -> None:
+        Resources.win_sfx.play()
+
+        self.buttons = []
+        button_width = self.screen_width/5
+        button_height = self.screen_height/10
+        button_x = (self.screen_width-button_width)/2
+        button_y = (button_height)
+        button_spacing_y = self.screen_height/10
+        button_spacing_x = self.screen_width/5
+        next_level_button = ui.Button(button_x, button_y+button_spacing_y*0, button_width, button_height, "NEXT LEVEL", self.next_level_button_clicked)
+        retry_button = ui.Button(button_x, button_y+button_spacing_y*1, button_width, button_height, "RETRY", self.retry_button_clicked)
+        back_to_level_list_button = ui.Button(button_x, button_y+button_spacing_y*2, button_width, button_height, "BACK TO LEVEL LIST", self.back_to_level_list_button_clicked)
+        back_to_menu_button = ui.Button(button_x, button_y+button_spacing_y*3, button_width, button_height, "BACK TO MENU", self.back_to_menu_button_clicked)
+        self.buttons.append(next_level_button)
+        self.buttons.append(retry_button)
+        self.buttons.append(back_to_level_list_button)
+        self.buttons.append(back_to_menu_button)
+
+        while self.state == GameState.WIN_SCREEN:
             self.window.fill(self.background_color)
             self.background.set_size(self.window.get_size()[0], self.window.get_size()[1])
             self.background.draw(self.window)
@@ -528,9 +575,8 @@ class Game:
             object.tick(dt)
         for player in [obj for obj in self.objects if type(obj) == body.Player]:
             if player.reached_target:
-                self.current_level += 1
-                self.load_level(self.levels[self.current_level])
-                Resources.win_sfx.play()
+                self.level.remove_object(player)
+                self.state = GameState.WIN_SCREEN
 
             
 
@@ -571,6 +617,7 @@ class GameState(Enum):
     IN_HOW_TO_PLAY = 5
     LEVEL_SELECT = 6
     PAUSE_MENU = 7
+    WIN_SCREEN = 8
 
 class Selection(Enum):
     DELETE = 0
